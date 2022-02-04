@@ -1,0 +1,69 @@
+- name: creating App Layer
+  hosts : PRO
+  become : yes
+  vars :
+    username : tom_user
+    TOM_URL : https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.58/bin/apache-tomcat-9.0.58.tar.gz
+    TOM_DIR : /tomcat
+    WEB_APP : /tomcat/apache-tomcat-9.0.58/webapps/
+    WEB_URL : http://3.109.202.240:8081/repository/maven-snapshots/com/ksapp/ks/3-SNAPSHOT/ks-3-20220121.052431-1.war
+    WEB_PATH : /tomcat/apache-tomcat-9.0.58/webapps/pavan.war
+  tasks :
+     - name: creat a user for tomcat
+       ansible.builtin.user:
+         name: tom_user
+
+     - name: Create a directory if it does not exist
+       ansible.builtin.file:
+        path: /tomcat
+        state: directory
+        owner: "{{username}}"
+        group: "{{username}}" 
+        mode: '0755'
+
+     - name: downloading tomcat and unziping it.
+       ansible.builtin.unarchive:
+        src: "{{TOM_URL}}"
+        dest: "{{TOM_DIR}}"
+        remote_src : yes
+       become_user : "{{username}}" 
+
+     - name: Execute the command in remote shell to removed below file.
+       ansible.builtin.shell: rm -f /var/run/yum.pid 
+
+     - name: Install java
+       yum:
+        name: java
+        state: latest
+        lock_timeout: 180
+
+     - name : removing files from web apps.
+       file :
+        path : "{{WEB_APP}}"
+        state : "{{item}}"
+       loop :
+         - absent
+         - directory   
+       become_user : "{{username}}"
+
+     - name: Download war file
+       get_url:
+        url: "{{WEB_URL}}"
+        dest: "{{WEB_PATH}}"
+       become_user : "{{username}}"
+
+     - name: checking tomcat.
+       shell : ps -ef | grep tomcat | grep -v grep
+       register : out
+       ignore_errors : true
+       
+
+     - name : starting tomcat
+       shell : "nohup sh /tomcat/apache-tomcat-9.0.58/bin/startup.sh"
+       when : out is failed
+       become_user : "{{username}}"
+
+     - name : restarting tomcat.
+       shell : "nohup sh /tomcat/apache-tomcat-9.0.58/bin/startup.sh && nohup sh /tomcat/apache-tomcat-9.0.58/bin/shutdown.sh"
+       when : out is success
+       become_user : "{{username}}"
