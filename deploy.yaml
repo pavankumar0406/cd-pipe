@@ -6,7 +6,6 @@
     TOM_URL : https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.58/bin/apache-tomcat-9.0.58.tar.gz
     TOM_DIR : /tomcat
     WEB_APP : /tomcat/apache-tomcat-9.0.58/webapps/
-    WEB_URL : http://34.125.196.120:8081/repository/maven-snapshots/com/ksapp/ks/8-SNAPSHOT/ks-8-20220212.190739-4.war
     WEB_PATH : /tomcat/apache-tomcat-9.0.58/webapps/pavan.war
   tasks :
      - name: creat a user for tomcat
